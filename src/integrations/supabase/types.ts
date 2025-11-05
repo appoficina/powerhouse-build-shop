@@ -14,7 +14,98 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      categories: {
+        Row: {
+          created_at: string
+          icon: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          icon: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          icon?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          additional_images: string[] | null
+          brand: string
+          category_id: string | null
+          created_at: string
+          description: string
+          featured: boolean | null
+          id: string
+          image_url: string
+          name: string
+          price: number
+          stock: number
+        }
+        Insert: {
+          additional_images?: string[] | null
+          brand: string
+          category_id?: string | null
+          created_at?: string
+          description: string
+          featured?: boolean | null
+          id?: string
+          image_url: string
+          name: string
+          price: number
+          stock?: number
+        }
+        Update: {
+          additional_images?: string[] | null
+          brand?: string
+          category_id?: string | null
+          created_at?: string
+          description?: string
+          featured?: boolean | null
+          id?: string
+          image_url?: string
+          name?: string
+          price?: number
+          stock?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      settings: {
+        Row: {
+          created_at: string
+          id: string
+          store_name: string
+          whatsapp_number: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          store_name?: string
+          whatsapp_number?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          store_name?: string
+          whatsapp_number?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
