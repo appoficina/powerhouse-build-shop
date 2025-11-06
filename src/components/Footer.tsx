@@ -1,9 +1,7 @@
 import { Link } from "react-router-dom";
 import { Package, Mail, Phone, MapPin } from "lucide-react";
-
 export const Footer = () => {
-  return (
-    <footer className="border-t bg-muted/40 mt-auto">
+  return <footer className="border-t bg-muted/40 mt-auto">
       <div className="container px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
@@ -55,7 +53,7 @@ export const Footer = () => {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4" />
-                <span>(11) 99999-9999</span>
+                <span>(51) 99999-9999</span>
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4" />
@@ -73,6 +71,5 @@ export const Footer = () => {
           <p>&copy; {new Date().getFullYear()} Powerhouse Shop. Todos os direitos reservados.</p>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 };
