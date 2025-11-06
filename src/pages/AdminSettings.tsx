@@ -150,7 +150,7 @@ const AdminSettings = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, whatsapp_number: e.target.value })
                     }
-                    placeholder="5511999999999"
+                    placeholder="5551982222222"
                     required
                   />
                   <p className="text-xs text-muted-foreground">
