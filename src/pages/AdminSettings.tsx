@@ -13,6 +13,7 @@ import { ArrowLeft, Save } from "lucide-react";
 const AdminSettings = () => {
   const navigate = useNavigate();
   const [session, setSession] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(false);
   const [settingsId, setSettingsId] = useState("");
   const [formData, setFormData] = useState({
@@ -25,11 +26,27 @@ const AdminSettings = () => {
   });
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) {
         navigate("/admin");
         return;
       }
+      
+      // Check if user is admin
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .eq("role", "admin")
+        .single();
+
+      if (!roleData) {
+        toast.error("Acesso negado. Apenas administradores.");
+        navigate("/");
+        return;
+      }
+
+      setIsAdmin(true);
       setSession(session);
       fetchSettings();
     });
@@ -93,7 +110,7 @@ const AdminSettings = () => {
     setLoading(false);
   };
 
-  if (!session) return null;
+  if (!session || !isAdmin) return null;
 
   return (
     <div className="min-h-screen flex flex-col">

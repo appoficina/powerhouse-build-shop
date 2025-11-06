@@ -17,6 +17,7 @@ import * as LucideIcons from "lucide-react";
 const AdminCategories = () => {
   const navigate = useNavigate();
   const [session, setSession] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -24,11 +25,27 @@ const AdminCategories = () => {
   const [formData, setFormData] = useState({ name: "", icon: "" });
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) {
         navigate("/admin");
         return;
       }
+      
+      // Check if user is admin
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .eq("role", "admin")
+        .single();
+
+      if (!roleData) {
+        toast.error("Acesso negado. Apenas administradores.");
+        navigate("/");
+        return;
+      }
+
+      setIsAdmin(true);
       setSession(session);
       fetchCategories();
     });
@@ -98,7 +115,7 @@ const AdminCategories = () => {
     return Icon ? <Icon className="h-5 w-5" /> : null;
   };
 
-  if (!session) return null;
+  if (!session || !isAdmin) return null;
 
   return (
     <div className="min-h-screen flex flex-col">
