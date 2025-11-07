@@ -87,10 +87,16 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-bold;
+  }
+  
+  /* Focus visible improvements */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-background;
   }
 }
 
@@ -113,5 +119,15 @@ All colors MUST be HSL.
 
   .transition-smooth {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* Product card hover */
+  .product-card-hover {
+    @apply transition-smooth hover:scale-[1.02] hover:shadow-hover;
+  }
+  
+  /* Shadow glow for CTAs */
+  .shadow-glow {
+    box-shadow: 0 0 40px hsl(var(--accent) / 0.25);
   }
 }

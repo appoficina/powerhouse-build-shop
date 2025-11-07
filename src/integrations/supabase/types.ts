@@ -47,6 +47,7 @@ export type Database = {
           image_url: string
           name: string
           price: number
+          specs: Json | null
           stock: number
         }
         Insert: {
@@ -60,6 +61,7 @@ export type Database = {
           image_url: string
           name: string
           price: number
+          specs?: Json | null
           stock?: number
         }
         Update: {
@@ -73,6 +75,7 @@ export type Database = {
           image_url?: string
           name?: string
           price?: number
+          specs?: Json | null
           stock?: number
         }
         Relationships: [
@@ -81,6 +84,44 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reviews: {
+        Row: {
+          author_name: string
+          comment: string
+          created_at: string
+          id: string
+          product_id: string
+          rating: number
+          updated_at: string
+        }
+        Insert: {
+          author_name: string
+          comment: string
+          created_at?: string
+          id?: string
+          product_id: string
+          rating: number
+          updated_at?: string
+        }
+        Update: {
+          author_name?: string
+          comment?: string
+          created_at?: string
+          id?: string
+          product_id?: string
+          rating?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]

@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
-import { ShoppingCart, Package } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { useCart } from "@/contexts/CartContext";
+import { StockBadge } from "@/modules/catalog/components/StockBadge";
+import { Price } from "@/modules/catalog/components/Price";
 
 interface Product {
   id: string;
@@ -12,6 +14,7 @@ interface Product {
   price: number;
   image_url: string;
   stock: number;
+  description?: string;
 }
 
 interface ProductCardProps {
@@ -26,37 +29,17 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     addToCart(product);
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(price);
-  };
-
-  const getBrandColor = (brand: string) => {
-    switch (brand) {
-      case "Tssaper":
-        return "bg-blue-500";
-      case "Buffalo":
-        return "bg-red-500";
-      case "Toyama":
-        return "bg-green-500";
-      default:
-        return "bg-gray-500";
-    }
-  };
-
   return (
     <Link to={`/produtos/${product.id}`}>
-      <Card className="h-full shadow-card hover:shadow-hover transition-smooth overflow-hidden group">
+      <Card className="h-full product-card-hover overflow-hidden group">
         <div className="relative aspect-square overflow-hidden bg-muted">
           <img
             src={product.image_url}
             alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-smooth"
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             loading="lazy"
           />
-          <Badge className={`absolute top-2 right-2 ${getBrandColor(product.brand)}`}>
+          <Badge className="absolute top-2 right-2 bg-primary text-primary-foreground">
             {product.brand}
           </Badge>
           {product.stock === 0 && (
@@ -69,16 +52,20 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         </div>
 
         <CardContent className="p-4">
-          <h3 className="font-semibold text-base line-clamp-2 mb-2 min-h-[3rem]">
+          <h3 className="font-semibold text-base line-clamp-2 mb-2 min-h-[3rem] group-hover:text-accent transition-colors">
             {product.name}
           </h3>
-          <p className="text-2xl font-bold text-primary">{formatPrice(product.price)}</p>
-          {product.stock > 0 && product.stock <= 5 && (
-            <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
-              <Package className="h-3 w-3" />
-              Últimas {product.stock} unidades!
+          {product.description && (
+            <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+              {product.description}
             </p>
           )}
+          <div className="flex items-center justify-between">
+            <Price value={product.price} size="lg" />
+            {product.stock > 0 && product.stock <= 5 && (
+              <StockBadge stock={product.stock} variant="compact" />
+            )}
+          </div>
         </CardContent>
 
         <CardFooter className="p-4 pt-0">
