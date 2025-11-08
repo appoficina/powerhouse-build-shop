@@ -6,6 +6,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { useCart } from "@/contexts/CartContext";
 import { StockBadge } from "@/modules/catalog/components/StockBadge";
 import { Price } from "@/modules/catalog/components/Price";
+import { useProductMediaQuery } from "@/modules/catalog/hooks/useProductMediaQuery";
 
 interface Product {
   id: string;
@@ -23,6 +24,14 @@ interface ProductCardProps {
 
 export const ProductCard = ({ product }: ProductCardProps) => {
   const { addToCart } = useCart();
+  const { data: media = [] } = useProductMediaQuery(product.id);
+  
+  // Get primary image or first image from media
+  const primaryMedia = media.find(m => m.is_primary && m.kind === 'image') || 
+                       media.find(m => m.kind === 'image') ||
+                       null;
+  const imageUrl = primaryMedia?.url || product.image_url || "/placeholder.svg";
+  const imageAlt = primaryMedia?.alt || product.name;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -34,8 +43,8 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       <Card className="h-full product-card-hover overflow-hidden group">
         <div className="relative aspect-square overflow-hidden bg-muted">
           <img
-            src={product.image_url}
-            alt={product.name}
+            src={imageUrl}
+            alt={imageAlt}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             loading="lazy"
           />

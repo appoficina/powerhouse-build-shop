@@ -12,7 +12,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCart } from "@/contexts/CartContext";
 import { useProductQuery } from "../hooks/useProductQuery";
 import { useReviewsQuery } from "../hooks/useReviewsQuery";
-import { ImageGallery } from "../components/ImageGallery";
+import { ProductMediaGallery } from "../components/ProductMediaGallery";
+import { useProductMediaQuery } from "../hooks/useProductMediaQuery";
 import { StockBadge } from "../components/StockBadge";
 import { Price } from "../components/Price";
 import { Rating } from "../components/Rating";
@@ -36,6 +37,7 @@ export default function ProductDetail() {
 
   const { data: product, isLoading: productLoading } = useProductQuery(id);
   const { data: reviewsData } = useReviewsQuery(id);
+  const { data: media = [] } = useProductMediaQuery(id);
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -89,8 +91,6 @@ export default function ProductDetail() {
     );
   }
 
-  const images = [product.image_url, ...(product.additional_images || [])];
-
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -116,7 +116,7 @@ export default function ProductDetail() {
         {/* Product Details */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
           {/* Gallery */}
-          <ImageGallery images={images} alt={product.name} />
+          <ProductMediaGallery media={media} productName={product.name} />
 
           {/* Product Info */}
           <div className="space-y-6">

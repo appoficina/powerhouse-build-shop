@@ -12,9 +12,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, ArrowLeft } from "lucide-react";
+import { AdminMediaManager } from "@/modules/catalog/components/AdminMediaManager";
 
 const AdminProducts = () => {
   const navigate = useNavigate();
@@ -256,14 +258,26 @@ const AdminProducts = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>URL da Imagem *</Label>
+                  <Label>URL da Imagem (Legacy) *</Label>
                   <Input
                     value={formData.image_url}
                     onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
                     placeholder="https://..."
                     required
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Use a galeria de mídia abaixo para gerenciar imagens do produto
+                  </p>
                 </div>
+
+                {editingProduct && (
+                  <>
+                    <Separator />
+                    <AdminMediaManager productId={editingProduct.id} />
+                  </>
+                )}
+
+                <Separator />
 
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
