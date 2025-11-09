@@ -22,7 +22,9 @@ const AdminCategories = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
-  const [formData, setFormData] = useState({ name: "", icon: "" });
+  const [formData, setFormData] = useState({ name: "", icon: "", image_url: "" });
+  const [uploading, setUploading] = useState(false);
+  const [useImage, setUseImage] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -58,32 +60,65 @@ const AdminCategories = () => {
   };
 
   const resetForm = () => {
-    setFormData({ name: "", icon: "" });
+    setFormData({ name: "", icon: "", image_url: "" });
     setEditingCategory(null);
+    setUseImage(false);
   };
 
   const handleOpenDialog = (category?: any) => {
     if (category) {
       setEditingCategory(category);
-      setFormData({ name: category.name, icon: category.icon });
+      setFormData({ name: category.name, icon: category.icon, image_url: category.image_url || "" });
+      setUseImage(!!category.image_url);
     } else {
       resetForm();
     }
     setDialogOpen(true);
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `categories/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('site-images')
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadError) {
+      toast.error("Erro ao fazer upload da imagem");
+      setUploading(false);
+      return;
+    }
+
+    const { data } = supabase.storage.from('site-images').getPublicUrl(filePath);
+    setFormData({ ...formData, image_url: data.publicUrl });
+    setUploading(false);
+    toast.success("Imagem carregada!");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const dataToSubmit = {
+      name: formData.name,
+      icon: useImage ? "" : formData.icon,
+      image_url: useImage ? formData.image_url : null,
+    };
 
     let error;
     if (editingCategory) {
       const res = await supabase
         .from("categories")
-        .update(formData)
+        .update(dataToSubmit)
         .eq("id", editingCategory.id);
       error = res.error;
     } else {
-      const res = await supabase.from("categories").insert([formData]);
+      const res = await supabase.from("categories").insert([dataToSubmit]);
       error = res.error;
     }
 
@@ -113,6 +148,13 @@ const AdminCategories = () => {
   const getIconComponent = (iconName: string) => {
     const Icon = (LucideIcons as any)[iconName];
     return Icon ? <Icon className="h-5 w-5" /> : null;
+  };
+
+  const getCategoryDisplay = (category: any) => {
+    if (category.image_url) {
+      return <img src={category.image_url} alt={category.name} className="h-10 w-10 object-cover rounded" />;
+    }
+    return getIconComponent(category.icon);
   };
 
   if (!session || !isAdmin) return null;
@@ -153,20 +195,60 @@ const AdminCategories = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Ícone (Lucide) *</Label>
-                  <Input
-                    value={formData.icon}
-                    onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                    placeholder="Ex: Zap, Package, Hammer"
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Veja ícones disponíveis em: lucide.dev
-                  </p>
+                  <Label>Tipo de Visualização</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={!useImage ? "default" : "outline"}
+                      onClick={() => setUseImage(false)}
+                      className="flex-1"
+                    >
+                      Ícone
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={useImage ? "default" : "outline"}
+                      onClick={() => setUseImage(true)}
+                      className="flex-1"
+                    >
+                      Imagem
+                    </Button>
+                  </div>
                 </div>
 
+                {!useImage ? (
+                  <div className="space-y-2">
+                    <Label>Ícone (Lucide) *</Label>
+                    <Input
+                      value={formData.icon}
+                      onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+                      placeholder="Ex: Zap, Package, Hammer"
+                      required={!useImage}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Veja ícones disponíveis em: lucide.dev
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Label>Imagem da Categoria *</Label>
+                    <Input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={handleImageUpload}
+                      disabled={uploading}
+                    />
+                    {formData.image_url && (
+                      <img src={formData.image_url} alt="Preview" className="h-20 w-20 object-cover rounded" />
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      PNG, JPEG ou WebP (máx. 5MB)
+                    </p>
+                  </div>
+                )}
+
                 <div className="flex gap-3 pt-4">
-                  <Button type="submit" className="flex-1">
+                  <Button type="submit" className="flex-1" disabled={uploading}>
                     {editingCategory ? "Atualizar" : "Criar"} Categoria
                   </Button>
                   <Button
@@ -190,7 +272,7 @@ const AdminCategories = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-20">Ícone</TableHead>
+                    <TableHead className="w-24">Visual</TableHead>
                     <TableHead>Nome</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -198,7 +280,7 @@ const AdminCategories = () => {
                 <TableBody>
                   {categories.map((category) => (
                     <TableRow key={category.id}>
-                      <TableCell>{getIconComponent(category.icon)}</TableCell>
+                      <TableCell>{getCategoryDisplay(category)}</TableCell>
                       <TableCell className="font-medium">{category.name}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">

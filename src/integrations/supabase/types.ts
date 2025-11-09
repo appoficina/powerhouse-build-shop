@@ -19,18 +19,21 @@ export type Database = {
           created_at: string
           icon: string
           id: string
+          image_url: string | null
           name: string
         }
         Insert: {
           created_at?: string
           icon: string
           id?: string
+          image_url?: string | null
           name: string
         }
         Update: {
           created_at?: string
           icon?: string
           id?: string
+          image_url?: string | null
           name?: string
         }
         Relationships: []
@@ -173,18 +176,27 @@ export type Database = {
       settings: {
         Row: {
           created_at: string
+          hero_image_url: string | null
+          hero_subtitle: string | null
+          hero_title: string | null
           id: string
           store_name: string
           whatsapp_number: string
         }
         Insert: {
           created_at?: string
+          hero_image_url?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string | null
           id?: string
           store_name?: string
           whatsapp_number?: string
         }
         Update: {
           created_at?: string
+          hero_image_url?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string | null
           id?: string
           store_name?: string
           whatsapp_number?: string

@@ -40,10 +40,22 @@ export const Footer = () => {
           {/* Marcas */}
           <div>
             <h3 className="font-semibold mb-4">Marcas</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>Tssaper</li>
-              <li>Buffalo</li>
-              <li>Toyama</li>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link to="/produtos?brand=Tssaper" className="text-muted-foreground hover:text-primary transition-smooth">
+                  Tssaper
+                </Link>
+              </li>
+              <li>
+                <Link to="/produtos?brand=Buffalo" className="text-muted-foreground hover:text-primary transition-smooth">
+                  Buffalo
+                </Link>
+              </li>
+              <li>
+                <Link to="/produtos?brand=Toyama" className="text-muted-foreground hover:text-primary transition-smooth">
+                  Toyama
+                </Link>
+              </li>
             </ul>
           </div>
 

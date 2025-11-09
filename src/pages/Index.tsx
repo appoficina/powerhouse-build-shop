@@ -26,22 +26,25 @@ const brands = [
 const Index = () => {
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [settings, setSettings] = useState<any>(null);
 
   useEffect(() => {
-    const fetchFeaturedProducts = async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .eq("featured", true)
-        .limit(8);
+    const fetchData = async () => {
+      const [productsRes, settingsRes] = await Promise.all([
+        supabase.from("products").select("*").eq("featured", true).limit(8),
+        supabase.from("settings").select("*").limit(1).single(),
+      ]);
 
-      if (!error && data) {
-        setFeaturedProducts(data);
+      if (productsRes.data) {
+        setFeaturedProducts(productsRes.data);
+      }
+      if (settingsRes.data) {
+        setSettings(settingsRes.data);
       }
       setLoading(false);
     };
 
-    fetchFeaturedProducts();
+    fetchData();
   }, []);
 
   return (
@@ -49,14 +52,21 @@ const Index = () => {
       <Header />
 
       {/* Hero Section */}
-      <section className="gradient-hero text-white py-20 md:py-32">
+      <section 
+        className="relative text-white py-20 md:py-32 bg-gradient-to-r from-primary to-primary/80"
+        style={settings?.hero_image_url ? {
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${settings.hero_image_url})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        } : undefined}
+      >
         <div className="container px-4">
           <div className="max-w-3xl mx-auto text-center space-y-6">
             <h1 className="text-4xl md:text-6xl font-bold leading-tight">
-              Ferramentas e Equipamentos Profissionais
+              {settings?.hero_title || "Ferramentas e Equipamentos Profissionais"}
             </h1>
             <p className="text-xl md:text-2xl text-white/90">
-              As melhores marcas para seu trabalho: Tssaper, Buffalo e Toyama
+              {settings?.hero_subtitle || "As melhores marcas para seu trabalho: Tssaper, Buffalo e Toyama"}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
               <Link to="/produtos">
@@ -144,15 +154,17 @@ const Index = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {brands.map((brand) => (
-            <Card key={brand.name} className="shadow-card hover:shadow-hover transition-smooth">
-              <CardContent className="p-8 text-center space-y-3">
-                <div className="flex justify-center">
-                  <Package className="h-16 w-16 text-primary" />
-                </div>
-                <h3 className="text-2xl font-bold text-primary">{brand.name}</h3>
-                <p className="text-muted-foreground">{brand.description}</p>
-              </CardContent>
-            </Card>
+            <Link key={brand.name} to={`/produtos?brand=${brand.name}`}>
+              <Card className="shadow-card hover:shadow-hover transition-smooth cursor-pointer h-full">
+                <CardContent className="p-8 text-center space-y-3">
+                  <div className="flex justify-center">
+                    <Package className="h-16 w-16 text-primary" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-primary">{brand.name}</h3>
+                  <p className="text-muted-foreground">{brand.description}</p>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       </section>

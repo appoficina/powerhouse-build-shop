@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ProductCard } from "@/components/ProductCard";
@@ -13,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 const Products = () => {
+  const [searchParams] = useSearchParams();
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,9 +26,17 @@ const Products = () => {
   const brands = ["Tssaper", "Buffalo", "Toyama"];
 
   useEffect(() => {
+    // Check for brand parameter in URL
+    const brandParam = searchParams.get("brand");
+    if (brandParam && brands.includes(brandParam)) {
+      setSelectedBrands([brandParam]);
+    }
     fetchCategories();
+  }, [searchParams]);
+
+  useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [selectedCategories, selectedBrands, searchTerm, sortBy]);
 
   const fetchCategories = async () => {
     const { data } = await supabase.from("categories").select("*");
@@ -70,13 +80,6 @@ const Products = () => {
     if (data) setProducts(data);
     setLoading(false);
   };
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchProducts();
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchTerm, selectedCategories, selectedBrands, sortBy]);
 
   const clearFilters = () => {
     setSelectedCategories([]);

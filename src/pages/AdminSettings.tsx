@@ -19,7 +19,11 @@ const AdminSettings = () => {
   const [formData, setFormData] = useState({
     store_name: "",
     whatsapp_number: "",
+    hero_title: "",
+    hero_subtitle: "",
+    hero_image_url: "",
   });
+  const [uploading, setUploading] = useState(false);
   const [passwordData, setPasswordData] = useState({
     newPassword: "",
     confirmPassword: "",
@@ -59,8 +63,36 @@ const AdminSettings = () => {
       setFormData({
         store_name: data.store_name,
         whatsapp_number: data.whatsapp_number,
+        hero_title: data.hero_title || "",
+        hero_subtitle: data.hero_subtitle || "",
+        hero_image_url: data.hero_image_url || "",
       });
     }
+  };
+
+  const handleHeroImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const fileExt = file.name.split('.').pop();
+    const fileName = `hero-${Date.now()}.${fileExt}`;
+    const filePath = `hero/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('site-images')
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadError) {
+      toast.error("Erro ao fazer upload da imagem");
+      setUploading(false);
+      return;
+    }
+
+    const { data } = supabase.storage.from('site-images').getPublicUrl(filePath);
+    setFormData({ ...formData, hero_image_url: data.publicUrl });
+    setUploading(false);
+    toast.success("Imagem carregada!");
   };
 
   const handleSaveSettings = async (e: React.FormEvent) => {
@@ -124,7 +156,63 @@ const AdminSettings = () => {
 
         <h1 className="text-4xl font-bold mb-8">Configurações</h1>
 
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl">
+        <div className="space-y-6 max-w-4xl">
+          {/* Hero Section Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Hero da Página Inicial</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSaveSettings} className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Título Principal</Label>
+                  <Input
+                    value={formData.hero_title}
+                    onChange={(e) =>
+                      setFormData({ ...formData, hero_title: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Subtítulo</Label>
+                  <Input
+                    value={formData.hero_subtitle}
+                    onChange={(e) =>
+                      setFormData({ ...formData, hero_subtitle: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Imagem de Fundo</Label>
+                  <Input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={handleHeroImageUpload}
+                    disabled={uploading}
+                  />
+                  {formData.hero_image_url && (
+                    <img 
+                      src={formData.hero_image_url} 
+                      alt="Hero preview" 
+                      className="h-32 w-full object-cover rounded" 
+                    />
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    PNG, JPEG ou WebP (máx. 5MB). Recomendado: 1920x600px
+                  </p>
+                </div>
+
+                <Button type="submit" disabled={loading || uploading}>
+                  <Save className="h-4 w-4 mr-2" />
+                  {loading ? "Salvando..." : "Salvar Configurações"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          <div className="grid md:grid-cols-2 gap-6">
           {/* Store Settings */}
           <Card>
             <CardHeader>
@@ -209,6 +297,7 @@ const AdminSettings = () => {
               </form>
             </CardContent>
           </Card>
+          </div>
         </div>
       </div>
 
