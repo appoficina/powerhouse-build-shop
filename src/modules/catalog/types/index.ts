@@ -2,14 +2,18 @@ export interface Product {
   id: string;
   name: string;
   description: string;
+  short_description?: string;
+  long_description?: string;
   price: number;
   stock: number;
   brand: string;
   category_id: string | null;
   image_url: string;
   additional_images: string[];
-  specs: Record<string, any>;
+  attributes: Record<string, any>;
   featured: boolean;
+  sku?: string;
+  slug?: string;
   created_at: string;
 }
 

@@ -1,119 +1,60 @@
-import { Link } from "react-router-dom";
-import { ShoppingCart, Search, Menu } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { ShoppingCart, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { NavLink } from "@/components/NavLink";
+import { SearchBar } from "@/components/SearchBar";
 import { useCart } from "@/contexts/CartContext";
-import { useState } from "react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import logoLight from "@/assets/logo-light.svg";
+import { useTheme } from "next-themes";
 import logoDark from "@/assets/logo-dark.svg";
+import logoLight from "@/assets/logo-light.svg";
 
 export const Header = () => {
   const { totalItems } = useCart();
-  const [searchOpen, setSearchOpen] = useState(false);
+  const { theme } = useTheme();
+  const location = useLocation();
+  const logo = theme === "dark" ? logoDark : logoLight;
+  
+  // Don't show search bar on products page (it has its own)
+  const showSearchBar = !location.pathname.startsWith('/produtos');
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between px-4">
-        {/* Logo */}
-        <Link to="/" className="flex items-center">
-          <img 
-            src={logoLight} 
-            alt="PowerHouse Shop" 
-            className="h-8 dark:hidden"
-          />
-          <img 
-            src={logoDark} 
-            alt="PowerHouse Shop" 
-            className="h-8 hidden dark:block"
-          />
+      <div className="container flex h-16 items-center px-4 gap-4">
+        <Link to="/" className="flex items-center gap-2 mr-6 shrink-0">
+          <img src={logo} alt="Powerhouse Shop" className="h-8" />
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6">
-          <Link to="/" className="text-sm font-medium hover:text-primary transition-smooth">
-            Home
-          </Link>
-          <Link to="/produtos" className="text-sm font-medium hover:text-primary transition-smooth">
-            Produtos
-          </Link>
-          <Link to="/admin" className="text-sm font-medium hover:text-primary transition-smooth">
-            Admin
-          </Link>
+        <nav className="hidden md:flex items-center gap-1">
+          <NavLink to="/">Home</NavLink>
+          <NavLink to="/produtos">Produtos</NavLink>
         </nav>
 
-        {/* Search Bar - Desktop */}
-        <div className="hidden md:flex flex-1 max-w-sm mx-6">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Buscar produtos..."
-              className="pl-10 w-full"
-              onClick={() => setSearchOpen(true)}
-            />
+        {showSearchBar && (
+          <div className="hidden md:block flex-1 max-w-md mx-4">
+            <SearchBar placeholder="Buscar produtos..." />
           </div>
-        </div>
+        )}
 
-        {/* Actions */}
-        <div className="flex items-center gap-2">
-          {/* Mobile Search */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            onClick={() => setSearchOpen(!searchOpen)}
-          >
-            <Search className="h-5 w-5" />
-          </Button>
-
-          {/* Cart */}
+        <div className="flex items-center gap-2 ml-auto">
           <Link to="/carrinho">
             <Button variant="ghost" size="icon" className="relative">
               <ShoppingCart className="h-5 w-5" />
               {totalItems > 0 && (
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-accent text-accent-foreground">
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
                   {totalItems}
                 </Badge>
               )}
             </Button>
           </Link>
-
-          {/* Mobile Menu */}
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent>
-              <nav className="flex flex-col gap-4 mt-8">
-                <Link to="/" className="text-lg font-medium hover:text-primary transition-smooth">
-                  Home
-                </Link>
-                <Link to="/produtos" className="text-lg font-medium hover:text-primary transition-smooth">
-                  Produtos
-                </Link>
-                <Link to="/admin" className="text-lg font-medium hover:text-primary transition-smooth">
-                  Admin
-                </Link>
-              </nav>
-            </SheetContent>
-          </Sheet>
         </div>
       </div>
-
-      {/* Mobile Search Bar */}
-      {searchOpen && (
-        <div className="md:hidden border-t px-4 py-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Buscar produtos..."
-              className="pl-10 w-full"
-            />
+      
+      {/* Mobile search bar */}
+      {showSearchBar && (
+        <div className="md:hidden border-t">
+          <div className="container px-4 py-3">
+            <SearchBar placeholder="Buscar produtos..." />
           </div>
         </div>
       )}

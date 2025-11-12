@@ -197,9 +197,9 @@ export default function ProductDetail() {
         </div>
 
         {/* Specs */}
-        {product.specs && Object.keys(product.specs).length > 0 && (
+        {product.attributes && Object.keys(product.attributes).length > 0 && (
           <div className="mb-16">
-            <ProductSpecs specs={product.specs} />
+            <ProductSpecs specs={product.attributes} />
           </div>
         )}
 

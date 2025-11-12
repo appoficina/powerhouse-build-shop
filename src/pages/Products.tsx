@@ -1,42 +1,35 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ProductCard } from "@/components/ProductCard";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SearchBar } from "@/components/SearchBar";
 import { Card } from "@/components/ui/card";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { SlidersHorizontal } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { useProductFilters } from "@/modules/catalog/hooks/useProductFilters";
+import { ProductFilters } from "@/modules/catalog/components/ProductFilters";
+import { ProductSort } from "@/modules/catalog/components/ProductSort";
+import { Brand, SortOption } from "@/modules/catalog/types";
+import { ScrollToTop } from "@/components/ScrollToTop";
 
 const Products = () => {
-  const [searchParams] = useSearchParams();
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState("name-asc");
-
-  const brands = ["Tssaper", "Buffalo", "Toyama"];
+  const { filters, updateFilter, updateFilters, clearFilters, hasActiveFilters } = useProductFilters();
+  
+  const brands: Brand[] = ["Tssaper", "Buffalo", "Toyama"];
+  const sortBy = (new URLSearchParams(window.location.search).get("sortBy") || "created_at-desc") as SortOption;
 
   useEffect(() => {
-    // Check for brand parameter in URL
-    const brandParam = searchParams.get("brand");
-    if (brandParam && brands.includes(brandParam)) {
-      setSelectedBrands([brandParam]);
-    }
     fetchCategories();
-  }, [searchParams]);
+  }, []);
 
   useEffect(() => {
     fetchProducts();
-  }, [selectedCategories, selectedBrands, searchTerm, sortBy]);
+  }, [filters, sortBy]);
 
   const fetchCategories = async () => {
     const { data } = await supabase.from("categories").select("*");
@@ -48,107 +41,84 @@ const Products = () => {
     let query = supabase.from("products").select("*");
 
     // Apply filters
-    if (selectedCategories.length > 0) {
-      query = query.in("category_id", selectedCategories);
+    if (filters.categories.length > 0) {
+      query = query.in("category_id", filters.categories);
     }
 
-    if (selectedBrands.length > 0) {
-      query = query.in("brand", selectedBrands);
+    if (filters.brands.length > 0) {
+      query = query.in("brand", filters.brands);
     }
 
-    if (searchTerm) {
-      query = query.ilike("name", `%${searchTerm}%`);
+    if (filters.search) {
+      query = query.ilike("name", `%${filters.search}%`);
+    }
+
+    if (filters.minPrice !== undefined) {
+      query = query.gte("price", filters.minPrice);
+    }
+
+    if (filters.maxPrice !== undefined) {
+      query = query.lte("price", filters.maxPrice);
+    }
+
+    if (filters.inStock) {
+      query = query.gt("stock", 0);
     }
 
     // Apply sorting
-    switch (sortBy) {
-      case "price-asc":
-        query = query.order("price", { ascending: true });
-        break;
-      case "price-desc":
-        query = query.order("price", { ascending: false });
-        break;
-      case "name-asc":
-        query = query.order("name", { ascending: true });
-        break;
-      case "name-desc":
-        query = query.order("name", { ascending: false });
-        break;
-    }
+    const [field, direction] = sortBy.split("-") as [string, "asc" | "desc"];
+    query = query.order(field, { ascending: direction === "asc" });
 
     const { data } = await query;
     if (data) setProducts(data);
     setLoading(false);
   };
 
-  const clearFilters = () => {
-    setSelectedCategories([]);
-    setSelectedBrands([]);
-    setSearchTerm("");
-    setSortBy("name-asc");
+  const handleSortChange = (value: SortOption) => {
+    const newParams = new URLSearchParams(window.location.search);
+    newParams.set("sortBy", value);
+    window.history.replaceState({}, "", `?${newParams.toString()}`);
+    fetchProducts();
   };
 
-  const hasActiveFilters = selectedCategories.length > 0 || selectedBrands.length > 0;
+  const handleCategoryChange = (categoryId: string, checked: boolean) => {
+    const newCategories = checked
+      ? [...filters.categories, categoryId]
+      : filters.categories.filter((id) => id !== categoryId);
+    updateFilter("categories", newCategories);
+  };
+
+  const handleBrandChange = (brand: Brand, checked: boolean) => {
+    const newBrands = checked
+      ? [...filters.brands, brand]
+      : filters.brands.filter((b) => b !== brand);
+    updateFilter("brands", newBrands);
+  };
+
+  const handlePriceChange = (min?: number, max?: number) => {
+    updateFilters({ minPrice: min, maxPrice: max });
+  };
+
+  const handleStockChange = (checked: boolean) => {
+    updateFilter("inStock", checked);
+  };
 
   const FilterContent = () => (
-    <div className="space-y-6">
-      {/* Categories */}
-      <div>
-        <h3 className="font-semibold mb-3">Categorias</h3>
-        <div className="space-y-2">
-          {categories.map((category) => (
-            <div key={category.id} className="flex items-center space-x-2">
-              <Checkbox
-                id={`cat-${category.id}`}
-                checked={selectedCategories.includes(category.id)}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    setSelectedCategories([...selectedCategories, category.id]);
-                  } else {
-                    setSelectedCategories(selectedCategories.filter((id) => id !== category.id));
-                  }
-                }}
-              />
-              <Label htmlFor={`cat-${category.id}`} className="cursor-pointer">
-                {category.name}
-              </Label>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Brands */}
-      <div>
-        <h3 className="font-semibold mb-3">Marcas</h3>
-        <div className="space-y-2">
-          {brands.map((brand) => (
-            <div key={brand} className="flex items-center space-x-2">
-              <Checkbox
-                id={`brand-${brand}`}
-                checked={selectedBrands.includes(brand)}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    setSelectedBrands([...selectedBrands, brand]);
-                  } else {
-                    setSelectedBrands(selectedBrands.filter((b) => b !== brand));
-                  }
-                }}
-              />
-              <Label htmlFor={`brand-${brand}`} className="cursor-pointer">
-                {brand}
-              </Label>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {hasActiveFilters && (
-        <Button variant="outline" onClick={clearFilters} className="w-full">
-          <X className="h-4 w-4 mr-2" />
-          Limpar Filtros
-        </Button>
-      )}
-    </div>
+    <ProductFilters
+      categories={categories}
+      brands={brands}
+      selectedCategories={filters.categories}
+      selectedBrands={filters.brands}
+      minPrice={filters.minPrice}
+      maxPrice={filters.maxPrice}
+      inStock={filters.inStock}
+      onCategoryChange={handleCategoryChange}
+      onBrandChange={handleBrandChange}
+      onPriceChange={handlePriceChange}
+      onStockChange={handleStockChange}
+      onClearFilters={clearFilters}
+      hasActiveFilters={hasActiveFilters}
+    />
   );
 
   return (
@@ -170,14 +140,11 @@ const Products = () => {
           <div className="flex-1">
             {/* Search and Sort Bar */}
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  type="search"
+              <div className="flex-1">
+                <SearchBar 
+                  initialValue={filters.search}
                   placeholder="Buscar produtos..."
-                  className="pl-10"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onSearch={(query) => updateFilter("search", query)}
                 />
               </div>
 
@@ -188,6 +155,11 @@ const Products = () => {
                     <Button variant="outline" className="lg:hidden">
                       <SlidersHorizontal className="h-4 w-4 mr-2" />
                       Filtros
+                      {hasActiveFilters && (
+                        <span className="ml-2 px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
+                          {filters.categories.length + filters.brands.length}
+                        </span>
+                      )}
                     </Button>
                   </SheetTrigger>
                   <SheetContent side="left">
@@ -200,17 +172,7 @@ const Products = () => {
                   </SheetContent>
                 </Sheet>
 
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Ordenar por" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="name-asc">Nome: A-Z</SelectItem>
-                    <SelectItem value="name-desc">Nome: Z-A</SelectItem>
-                    <SelectItem value="price-asc">Menor preço</SelectItem>
-                    <SelectItem value="price-desc">Maior preço</SelectItem>
-                  </SelectContent>
-                </Select>
+                <ProductSort value={sortBy} onChange={handleSortChange} />
               </div>
             </div>
 
@@ -239,6 +201,7 @@ const Products = () => {
       </div>
 
       <Footer />
+      <ScrollToTop />
     </div>
   );
 };
