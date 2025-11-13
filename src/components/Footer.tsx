@@ -34,6 +34,11 @@ export const Footer = () => {
                   Carrinho
                 </Link>
               </li>
+              <li>
+                <Link to="/admin" className="text-muted-foreground hover:text-primary transition-smooth">
+                  Admin
+                </Link>
+              </li>
             </ul>
           </div>
 
